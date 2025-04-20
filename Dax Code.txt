@@ -1,0 +1,103 @@
+**Average Company
+------------------
+Avg_Company = 
+var Textyear = YEAR(SELECTEDVALUE(job_postings1[Month_year]))
+var TextMonth = MONTH(SELECTEDVALUE(job_postings1[Month_year]))
+
+var FirstD = CALCULATE(MIN(job_postings1[Job_Posting_Date]),
+                        YEAR(job_postings1[Job_Posting_Date]) = Textyear &&
+                        MONTH(job_postings1[Job_Posting_Date]) = TextMonth)
+
+var LastD = CALCULATE(MAX(job_postings1[Job_Posting_Date]),
+                        YEAR(job_postings1[Job_Posting_Date]) = Textyear &&
+                        MONTH(job_postings1[Job_Posting_Date]) = TextMonth)
+
+var TotalDays = DATEDIFF(FirstD,LastD,DAY)+1
+var TotalOpenings = DISTINCTCOUNT(job_postings1[Company_Name])
+
+RETURN
+TotalOpenings/TotalDays
+
+**Average Opening
+------------------
+Avg_Opening = 
+var Textyear = YEAR(SELECTEDVALUE(job_postings1[Month_year]))
+var TextMonth = MONTH(SELECTEDVALUE(job_postings1[Month_year]))
+
+var FirstD = CALCULATE(MIN(job_postings1[Job_Posting_Date]),
+                        YEAR(job_postings1[Job_Posting_Date]) = Textyear &&
+                        MONTH(job_postings1[Job_Posting_Date]) = TextMonth)
+
+var LastD = CALCULATE(MAX(job_postings1[Job_Posting_Date]),
+                        YEAR(job_postings1[Job_Posting_Date]) = Textyear &&
+                        MONTH(job_postings1[Job_Posting_Date]) = TextMonth)
+
+var TotalDays = DATEDIFF(FirstD,LastD,DAY)+1
+var TotalOpenings = COUNT(job_postings1[Job_Id])
+
+RETURN
+TotalOpenings/TotalDays
+
+**Distinct Company
+-------------------
+Countr = 
+var years = SELECTEDVALUE(job_postings1[Job_Posting_Date].[Year])
+
+RETURN
+CALCULATE(DISTINCTCOUNT(job_postings1[Company_Name]))
+
+**Job Percentage Type
+----------------------
+JobPercentageType = 
+VAR Totalcompaniesinyear = 
+        CALCULATE(
+            DISTINCTCOUNT(job_postings1[Company_Name]),
+            ALLEXCEPT(job_postings1,job_postings1[Job_Posting_Date].[Year],job_postings1[Job_Field]))
+RETURN
+DISTINCTCOUNT(job_postings1[Company_Name])/Totalcompaniesinyear
+
+**Max Job field Per Country Year
+---------------------------------
+MaxJobFieldPerCountryYear = 
+var currentcountry = SELECTEDVALUE(job_postings1[Countries])
+var currentyear = YEAR(SELECTEDVALUE(job_postings1[Job_Posting_Date]))
+
+var maxfieldtable = 
+    SUMMARIZE(
+        FILTER(job_postings1,job_postings1[Countries]=currentcountry&& YEAR(job_postings1[Job_Posting_Date])=currentyear && job_postings1[Job_Field]<>"No Clear Specifications"),
+        job_postings1[Job_Field],
+        "PostingCount",COUNT(job_postings1[Job_Id])
+    )
+
+var Maxpostings = 
+    MAXX(maxfieldtable,[PostingCount])
+
+RETURN
+MAXX(
+    FILTER(maxfieldtable,
+        [PostingCount]=Maxpostings
+    ),job_postings1[Job_Field]
+)
+
+**Top 3 Job damain by year
+---------------------
+Top 3 Job Domainsby year = 
+var currentyear = SELECTEDVALUE(job_postings1[Job_Posting_Date].[Year])
+
+var topdomains =
+ TOPN(
+    3,
+    SUMMARIZE(
+        FILTER(job_postings1,
+                YEAR(job_postings1[Job_Posting_Date]) = currentyear && 
+                 job_postings1[Job_Field] <> "No Clear Specifications"
+        ),
+        job_postings1[Job_Field],
+        "JobCount",COUNT(job_postings1[Job_Id])
+    ),
+    [JobCount],
+    DESC
+)
+
+RETURN
+CONCATENATEX(topdomains,job_postings1[Job_Field],",")
